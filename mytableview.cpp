@@ -1,6 +1,7 @@
 #include "mytableview.h"
 #include <QFileDialog>
 #include <QDateTime>
+#include <QMessageBox>
 
 
 static QString openvpn_config  = QDir::homePath()+"/openvpn.cfg";
@@ -24,7 +25,7 @@ MyTableView::MyTableView(QWidget *parent)
     this->setWindowFlags(Qt::WindowMaximizeButtonHint|
                          Qt::WindowCloseButtonHint);
     connect(m_OpenCsvFile,SIGNAL(clicked()),SLOT(slot_openCSVFile()));
-    QTableView *ServerView = new QTableView;
+    ServerView = new QTableView;
 
     m_csvLine->setEnabled(false);
 
@@ -43,6 +44,11 @@ MyTableView::MyTableView(QWidget *parent)
 }
 
 
+QStringList MyTableView::getCurrentList() const
+{
+    return m_currentStringList;
+}
+
 void MyTableView::slot_ClickedItem(const QModelIndex &index)
 {
     QFile fd(openvpn_config);
@@ -51,6 +57,7 @@ void MyTableView::slot_ClickedItem(const QModelIndex &index)
     fd.write(QByteArray::fromBase64(m_listbase64.at(index.row()).toLocal8Bit()));
     fd.close();
     this->hide();
+    m_currentStringList = m_standModel->data(index).toStringList();
     emit sig_readytoconnect();
 }
 
@@ -82,7 +89,7 @@ void MyTableView::slot_openCSVFile()
 //    s_format.replace(s_format.length(),1,")");
     QString m_LastPath("");
     m_csvfile =  QFileDialog::getOpenFileName(this,tr("选择文件"),m_csvLine->text(),
-                                                          tr("support csv (*.csv *.*)"));
+                                                          tr("support csv (*.csv *.txt *.html)"));
 
 //    if(listfiles.count() >0)
 //    {
@@ -114,6 +121,12 @@ void MyTableView::slot_openCSVFile()
     QFile fd(m_csvfile);
     if(!fd.open(QIODevice::ReadOnly|QIODevice::Text))
         return;
+    if(!fd.readLine().startsWith("*vpn_servers"))
+    {
+        QMessageBox::warning(this,"error","wrong file format!");
+        fd.close();
+        return;
+    }
     while(!fd.atEnd())
     {
         QString line = fd.readLine();

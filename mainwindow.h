@@ -17,8 +17,9 @@ public:
 private:
     QStandardItemModel *m_standmodel;
     QProcess *m_proc;
-
+    QStringList m_ListEnv;
     void setHorizontalHeaderList(const QStringList &list);
+    QList<QStandardItem*> appendRowToView(const QStringList &list);
 private slots:
     void slot_ClieckItemRow(const QModelIndex);
     void slot_ReadyToConnectServer();

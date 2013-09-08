@@ -5,7 +5,9 @@
 
 static QString openvpn_config  = QDir::homePath()+"/openvpn.cfg";
 static QString openvpn_log  = QDir::homePath()+"/openvpn.log";
-static QString openvpn_exec = "openvpn.exe";
+static QString openvpn_exec = "/usr/sbin/openvpn";
+
+
 
 static QStringList view_header(QStringList() << "Connect Name" << "Status" << "VPN Server Host");
 MainWindow::MainWindow(QWidget *parent) :
@@ -15,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_proc(new QProcess)
 {
 
-
+    m_ListEnv = m_proc->systemEnvironment();
     QTableView *main_view = new QTableView;
     m_serverlist->hide();
 
@@ -57,20 +59,33 @@ void MainWindow::slot_ReadyToConnectServer()
 {
     if(m_proc->state() == QProcess::Running)
     {
-        QKeyEvent event(QEvent::KeyPress, Qt::Key_F4,Qt::NoModifier);
-         QApplication::postEvent(m_proc,&event);
-         QKeyEvent event2(QEvent::KeyPress, Qt::Key_Enter,Qt::NoModifier);
-          QApplication::postEvent(m_proc,&event2);
+        m_proc->terminate();
+        m_proc->kill();
+        while(m_proc->waitForFinished());
     }
 
-    m_proc->start(openvpn_exec,QStringList()  << "--config" << openvpn_config
-     << "--log" <<openvpn_log);
+
+    m_proc->start(openvpn_exec,QStringList() /*<< "--user" << m_ListEnv.at(20).section("=",1,1) */<< "--config" << openvpn_config
+                  << "--log" <<openvpn_log << "--status" << "openvpn.status" << "1");
+    QStringList tlist = m_serverlist->getCurrentList();
+//    m_standmodel->appendRow(appendRowToView(QStringList() << tlist.at(0) << "connectting" << tlist.at(1)));
 }
+
+QList<QStandardItem*> MainWindow::appendRowToView(const QStringList &list)
+{
+    QList<QStandardItem*> rowlist;
+    for(int i = 0 ; i < list.count();i++)
+    {
+        rowlist.append(new QStandardItem(list.at(i)));
+    }
+    return rowlist;
+}
+
 
 void MainWindow::slot_readyReadStandardOutput()
 {
     QString tmp = m_proc->readAll();
-    tmp.count();
+
 }
 
 void MainWindow::setHorizontalHeaderList(const QStringList &list)

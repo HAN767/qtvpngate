@@ -14,6 +14,8 @@ class MyTableView: public QWidget
 public:
     explicit MyTableView(QWidget *parent=0);
     ~MyTableView();
+    QStringList getCurrentList() const;
+    QTableView *ServerView;
 private:
     QGridLayout *m_Layout;
     QLineEdit* m_csvLine;
@@ -23,6 +25,7 @@ private:
     QStandardItemModel* m_standModel;
 
     QStringList m_listbase64;
+    QStringList m_currentStringList;
 
 
     void setHorizontalHeaderList(const QStringList &list);
